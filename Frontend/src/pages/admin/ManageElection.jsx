@@ -157,11 +157,10 @@ export default function ManageElection() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === tab.id
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${activeTab === tab.id
                 ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
-            }`}
+              }`}
           >
             <tab.icon size={14} />
             {tab.label}
@@ -343,7 +342,7 @@ export default function ManageElection() {
                     <div key={candidate.candidate_id}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-medium text-slate-700">
-                          {index === 0 && results.total_votes > 0 && '🏆 '}{candidate.full_name}
+                          {index === 0 && results.total_votes > 0 && ' '}{candidate.full_name}
                         </span>
                         <span className="text-sm text-slate-500">{candidate.vote_count} votes ({percentage}%)</span>
                       </div>

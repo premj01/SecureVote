@@ -85,7 +85,7 @@ export default function ResultPage() {
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         {index === 0 && data.total_votes > 0 && (
-                          <span className="text-xs bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded font-medium">🏆</span>
+                          <span className="text-xs bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded font-medium"></span>
                         )}
                         <span className="text-sm font-medium text-slate-700">{candidate.full_name}</span>
                       </div>
