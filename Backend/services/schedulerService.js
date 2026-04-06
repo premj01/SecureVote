@@ -1,16 +1,15 @@
 import pool from '../config/db.js';
 
-/**
- * Clock-based scheduler service
- * Automatically transitions election statuses based on current time:
- * - upcoming → application_open (when application_start is reached)
- * - application_open → application_closed (when application_end is reached)
- * - application_closed → voting_active (when voting_start is reached)
- * - voting_active → ended (when voting_end is reached)
- *
- * Runs every 30 seconds to check and update.
- * "Paused" elections are NOT auto-transitioned.
- */
+
+// Clock-based scheduler service
+// Automatically transitions election statuses based on current time:
+// - upcoming → application_open (when application_start is reached)
+// - application_open → application_closed (when application_end is reached)
+// - application_closed → voting_active (when voting_start is reached)
+// - voting_active → ended (when voting_end is reached)
+// Runs every 30 seconds to check and update.
+// "Paused" elections are NOT auto-transitioned.
+
 
 let schedulerInterval = null;
 
