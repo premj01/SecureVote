@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Force Node.js timezone to Indian Standard Time (IST)
+// Force Node.js timezone to Indian Standard Time
 process.env.TZ = 'Asia/Kolkata';
 
 import authRoutes from './routes/authRoutes.js';
