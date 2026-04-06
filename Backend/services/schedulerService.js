@@ -51,7 +51,7 @@ export async function updateElectionStatuses() {
 }
 
 export function startScheduler() {
-  console.log('🕐 Election status scheduler started (every 30s)');
+  //console.log('🕐 Election status scheduler started (every 30s)');
 
   // Run immediately on start
   updateElectionStatuses();
