@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://10.0.2.15:5000/api',
+  baseURL: 'https://securevote-xou3.onrender.com/api',
 });
 
 // Add JWT token to every request
