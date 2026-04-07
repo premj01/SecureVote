@@ -193,7 +193,9 @@ export default function ManageElection() {
               <p className="text-xs text-slate-500">Candidates</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">{election.total_votes || 0}</p>
+              <p className="text-2xl font-bold text-green-600">
+                {election.status === 'ended' ? (election.total_votes || 0) : '?'}
+              </p>
               <p className="text-xs text-slate-500">Votes Cast</p>
             </div>
           </div>
@@ -327,7 +329,17 @@ export default function ManageElection() {
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <h3 className="font-medium text-slate-800 mb-4">Election Results</h3>
 
-          {results && results.results ? (
+          {election.status !== 'ended' ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BarChart3 className="text-slate-400" size={28} />
+              </div>
+              <p className="text-slate-800 font-medium mb-2">Results are currently hidden</p>
+              <p className="text-sm text-slate-500 max-w-sm mx-auto">
+                To maintain election integrity, live results and vote counts are hidden from all administrators until the election has officially ended.
+              </p>
+            </div>
+          ) : results && results.results ? (
             <>
               <p className="text-sm text-slate-500 mb-4">Total votes: {results.total_votes}</p>
 
@@ -342,7 +354,7 @@ export default function ManageElection() {
                     <div key={candidate.candidate_id}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-medium text-slate-700">
-                          {index === 0 && results.total_votes > 0 && ' '}{candidate.full_name}
+                          {index === 0 && results.total_votes > 0 && '👑 '}{candidate.full_name}
                         </span>
                         <span className="text-sm text-slate-500">{candidate.vote_count} votes ({percentage}%)</span>
                       </div>
