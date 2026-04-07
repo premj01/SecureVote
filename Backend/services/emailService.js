@@ -10,7 +10,7 @@ export async function sendOtpEmail(email, otp, purpose = 'verification') {
         throw new Error('RESEND_API_KEY is not configured.');
     }
 
-    const subject = `${otp} is your SecureVote ${purpose} code`;
+    const subject = `Verification: SecureVote ${purpose} code`;
 
     const { data, error } = await resend.emails.send({
         from: fromEmail,
