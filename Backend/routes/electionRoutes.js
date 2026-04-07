@@ -8,7 +8,7 @@ import {
   getVotingHistory,
   getMyApplications
 } from '../controllers/electionController.js';
-import { vote } from '../controllers/voteController.js';
+import { vote, requestVoteOtp, verifyVoteOtpAndCastVote } from '../controllers/voteController.js';
 
 const router = express.Router();
 
@@ -18,6 +18,8 @@ router.use(authMiddleware);
 router.get('/upcoming', getUpcomingElections);
 router.post('/find-by-code', findByCode);
 router.post('/apply-candidate', applyCandidate);
+router.post('/vote/request-otp', requestVoteOtp);
+router.post('/vote/verify', verifyVoteOtpAndCastVote);
 router.post('/vote', vote);
 router.get('/result/:id', getResults);
 router.get('/history', getVotingHistory);

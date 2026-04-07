@@ -2,8 +2,14 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import pool from '../config/db.js';
 import { generateUniqueVoterId } from '../utils/generateVoterId.js';
+import { createOtpChallenge, verifyOtpChallengeAndConsume } from '../services/otpService.js';
+import { sendOtpEmail } from '../services/emailService.js';
 
 export async function register(req, res) {
+  return requestRegistrationOtp(req, res);
+}
+
+export async function requestRegistrationOtp(req, res) {
   try {
     const { email, password, full_name } = req.body;
 
@@ -17,9 +23,64 @@ export async function register(req, res) {
       return res.status(409).json({ error: 'Email already registered.' });
     }
 
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+    }
+
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
+
+    const otp = await createOtpChallenge({
+      purpose: 'registration',
+      email,
+      payload: {
+        full_name,
+        password_hash
+      }
+    });
+
+    await sendOtpEmail(email, otp, 'registration verification');
+
+    res.status(200).json({
+      message: 'OTP sent successfully. Please verify to complete registration.'
+    });
+  } catch (err) {
+    console.error('Request registration OTP error:', err);
+
+    if (err.message.includes('Please wait')) {
+      return res.status(429).json({ error: err.message });
+    }
+
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
+export async function verifyRegistrationOtp(req, res) {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and OTP are required.' });
+    }
+
+    const challenge = await verifyOtpChallengeAndConsume({
+      purpose: 'registration',
+      email,
+      otp
+    });
+
+    const full_name = challenge.payload?.full_name;
+    const password_hash = challenge.payload?.password_hash;
+
+    if (!full_name || !password_hash) {
+      return res.status(400).json({ error: 'Invalid registration payload. Please request OTP again.' });
+    }
+
+    const [existing] = await pool.execute('SELECT user_id FROM users WHERE email = ?', [email]);
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'Email already registered.' });
+    }
 
     // Generate unique voter ID
     const voter_id = await generateUniqueVoterId(pool);
@@ -49,7 +110,17 @@ export async function register(req, res) {
       }
     });
   } catch (err) {
-    console.error('Register error:', err);
+    console.error('Verify registration OTP error:', err);
+
+    if (
+      err.message.includes('OTP') ||
+      err.message.includes('Invalid') ||
+      err.message.includes('expired') ||
+      err.message.includes('attempts')
+    ) {
+      return res.status(400).json({ error: err.message });
+    }
+
     res.status(500).json({ error: 'Internal server error.' });
   }
 }

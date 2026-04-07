@@ -24,6 +24,26 @@ CREATE TABLE IF NOT EXISTS elections (
   FOREIGN KEY (created_by) REFERENCES users(user_id)
 );
 
+CREATE TABLE IF NOT EXISTS otp_challenges (
+  otp_id INT AUTO_INCREMENT PRIMARY KEY,
+  purpose ENUM('registration','vote') NOT NULL,
+  email VARCHAR(255),
+  user_id INT,
+  election_id INT,
+  otp_hash CHAR(64) NOT NULL,
+  payload_json TEXT,
+  expires_at DATETIME NOT NULL,
+  attempts INT DEFAULT 0,
+  max_attempts INT DEFAULT 5,
+  verified_at DATETIME,
+  consumed_at DATETIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_otp_email_purpose (email, purpose, consumed_at, expires_at),
+  INDEX idx_otp_user_election_purpose (user_id, election_id, purpose, consumed_at, expires_at),
+  FOREIGN KEY (user_id) REFERENCES users(user_id),
+  FOREIGN KEY (election_id) REFERENCES elections(election_id)
+);
+
 CREATE TABLE IF NOT EXISTS candidate_applications (
   application_id INT AUTO_INCREMENT PRIMARY KEY,
   election_id INT NOT NULL,

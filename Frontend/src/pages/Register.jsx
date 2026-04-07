@@ -6,13 +6,17 @@ import API from '../services/api';
 export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ full_name: '', email: '', password: '', confirmPassword: '' });
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.');
@@ -27,14 +31,30 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await API.post('/auth/register', {
-        full_name: form.full_name,
-        email: form.email,
-        password: form.password
-      });
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      navigate('/dashboard');
+      if (!otpSent) {
+        await API.post('/auth/register/request-otp', {
+          full_name: form.full_name,
+          email: form.email,
+          password: form.password
+        });
+
+        setOtpSent(true);
+        setSuccess('OTP sent to your email. Enter it below to complete registration.');
+      } else {
+        if (!otp) {
+          setError('Please enter OTP.');
+          return;
+        }
+
+        const res = await API.post('/auth/register/verify-otp', {
+          email: form.email,
+          otp
+        });
+
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.');
     } finally {
@@ -51,6 +71,12 @@ export default function Register() {
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-6">
+          {success && (
+            <div className="bg-emerald-50 text-emerald-700 text-sm px-4 py-2.5 rounded-lg mb-4 border border-emerald-100">
+              {success}
+            </div>
+          )}
+
           {error && (
             <div className="bg-red-50 text-red-600 text-sm px-4 py-2.5 rounded-lg mb-4 border border-red-100">
               {error}
@@ -67,6 +93,7 @@ export default function Register() {
                   required
                   value={form.full_name}
                   onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                  disabled={otpSent}
                   className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter your full name"
                 />
@@ -82,6 +109,7 @@ export default function Register() {
                   required
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  disabled={otpSent}
                   className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="you@example.com"
                 />
@@ -97,6 +125,7 @@ export default function Register() {
                   required
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  disabled={otpSent}
                   className="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Min 6 characters"
                 />
@@ -119,19 +148,50 @@ export default function Register() {
                   required
                   value={form.confirmPassword}
                   onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                  disabled={otpSent}
                   className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Re-enter your password"
                 />
               </div>
             </div>
 
+            {otpSent && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email OTP</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm tracking-[0.3em] text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="000000"
+                />
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
             >
-              {loading ? 'Creating account...' : 'Register'}
+              {loading ? 'Please wait...' : otpSent ? 'Verify OTP & Register' : 'Send OTP'}
             </button>
+
+            {otpSent && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOtp('');
+                  setOtpSent(false);
+                  setSuccess('');
+                  setError('');
+                }}
+                className="w-full border border-slate-200 text-slate-600 py-2.5 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm"
+              >
+                Edit Details
+              </button>
+            )}
           </form>
         </div>
 

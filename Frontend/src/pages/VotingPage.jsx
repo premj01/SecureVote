@@ -10,8 +10,11 @@ export default function VotingPage() {
   const { election, candidates } = location.state || {};
 
   const [selectedCandidate, setSelectedCandidate] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   if (!election || !candidates) {
     return (
@@ -27,9 +30,34 @@ export default function VotingPage() {
     );
   }
 
-  const handleVote = async () => {
+  const handleRequestOtp = async () => {
     if (!selectedCandidate) {
       setError('Please select a candidate.');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    try {
+      await API.post('/elections/vote/request-otp', {
+        election_id: parseInt(electionId),
+        candidate_id: parseInt(selectedCandidate)
+      });
+
+      setOtpSent(true);
+      setSuccess('OTP sent to your registered email. Enter it below to confirm your vote.');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to send OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyAndVote = async () => {
+    if (!otp) {
+      setError('Please enter OTP.');
       return;
     }
 
@@ -37,9 +65,9 @@ export default function VotingPage() {
     setLoading(true);
 
     try {
-      await API.post('/elections/vote', {
+      await API.post('/elections/vote/verify', {
         election_id: parseInt(electionId),
-        candidate_id: parseInt(selectedCandidate)
+        otp
       });
 
       navigate(`/results/${electionId}`, {
@@ -63,6 +91,12 @@ export default function VotingPage() {
           <p className="text-sm text-slate-500 mt-1">Select your candidate and cast your vote</p>
         </div>
 
+        {success && (
+          <div className="bg-emerald-50 text-emerald-700 text-sm px-4 py-2.5 rounded-lg mb-4 border border-emerald-100">
+            {success}
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-50 text-red-600 text-sm px-4 py-2.5 rounded-lg mb-4 border border-red-100">
             {error}
@@ -76,6 +110,7 @@ export default function VotingPage() {
             <select
               value={selectedCandidate}
               onChange={(e) => setSelectedCandidate(e.target.value)}
+              disabled={otpSent}
               className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white cursor-pointer"
             >
               <option value="">-- Choose a candidate --</option>
@@ -99,13 +134,42 @@ export default function VotingPage() {
           </div>
         )}
 
+        {otpSent && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-slate-700 mb-2">Enter OTP</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm tracking-[0.3em] text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="000000"
+            />
+          </div>
+        )}
+
         <button
-          onClick={handleVote}
+          onClick={otpSent ? handleVerifyAndVote : handleRequestOtp}
           disabled={loading || !selectedCandidate}
           className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
         >
-          {loading ? 'Casting vote...' : 'Cast Vote'}
+          {loading ? 'Please wait...' : otpSent ? 'Verify OTP & Cast Vote' : 'Send OTP'}
         </button>
+
+        {otpSent && (
+          <button
+            onClick={() => {
+              setOtp('');
+              setOtpSent(false);
+              setSuccess('');
+              setError('');
+            }}
+            className="w-full mt-3 border border-slate-200 text-slate-600 py-3 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm"
+          >
+            Change Candidate
+          </button>
+        )}
 
         <p className="text-xs text-slate-400 text-center mt-3">
           Your vote is anonymous and cannot be changed after submission.

@@ -71,7 +71,7 @@ export async function castVote(user_id, election_id, candidate_id) {
     // 6. Commit transaction
     await connection.commit();
 
-    return { success: true, message: 'Vote cast successfully.' };
+    return { success: true, message: 'Voted successfully.' };
   } catch (err) {
     await connection.rollback();
     throw err;
