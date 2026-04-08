@@ -106,6 +106,24 @@ async function seed() {
 
     console.log('✅ Schema created successfully');
 
+    console.log('🧹 Clearing existing data (preserving admin users)...');
+
+    // Temporarily disable FK checks so truncation order issues cannot break reset.
+    await pool.execute('SET FOREIGN_KEY_CHECKS = 0');
+    try {
+      await pool.execute('TRUNCATE TABLE vote_tracking');
+      await pool.execute('TRUNCATE TABLE votes');
+      await pool.execute('TRUNCATE TABLE candidates');
+      await pool.execute('TRUNCATE TABLE candidate_applications');
+      await pool.execute('TRUNCATE TABLE otp_challenges');
+      await pool.execute('TRUNCATE TABLE elections');
+      await pool.execute("DELETE FROM users WHERE role <> 'admin'");
+    } finally {
+      await pool.execute('SET FOREIGN_KEY_CHECKS = 1');
+    }
+
+    console.log('✅ Data cleared; admin users preserved');
+
     // Check if admin exists
     const [admins] = await pool.execute('SELECT user_id FROM users WHERE email = ?', ['admin@election.com']);
 
